@@ -1,6 +1,5 @@
 Electric = {}
-
-ElectricConfig = {
+Electric = {
     Blips = true,
     BlipNamer = true,
     Pedspawn = true,
@@ -11,17 +10,22 @@ ElectricConfig = {
     Distance = 40.0,
     MinusOne = true,
 }
+Electric.WorkTimeMultiplier = 5000 -- Amount of ms per block. This will randomize the progress bar time in block of 5 seconds
+Electric.WorkTimeMin = 3 -- Minumum time for a repair to take times the multiplier. So thh minimum progress bar time for this would be 15 seconds.
+Electric.WorkTimeMax = 6 -- Maximum time for a repair to take times the multiplier. So thh maximum progress bar time for this would be 30 seconds.
+-- ^ This will set the progress bar time for repairs either 15, 20, 25, or 30 seconds
 
-Electric.PedList = {
-    { model = "s_m_m_dockwork_01", 
-    coords = vector3(736.77, 132.61, 80.71),
-    minZ = 78.71,
-    maxZ = 82.71, 
-    heading = 241.35, 
-    gender = "male", 
-    scenario = "", 
-    },
-}
+Electric.JobPayout = 550 -- Amount of cash to pay per job site finished. This is divided evenly among group members.
+
+Electric.MaxJobs1Person = 4 -- 1 person in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
+Electric.MaxJobs2People = 6 -- 2 people in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
+Electric.MaxJobs3People = 8 -- 3 people in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
+Electric.MaxJobs4People = 10 -- 4 people in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
+
+Electric.MaxGroupSize = 4 -- Max amount of people ina  group that can start a run. 4 is recommended as there are only 4 seats in the truck.
+
+Electric.BuffsEnabled = true -- True or False to enable the liberty buff system on payout.
+
 
 Electric.TruckSpawns = {
     vector4(742.74, 125.69, 79.66, 243.74),

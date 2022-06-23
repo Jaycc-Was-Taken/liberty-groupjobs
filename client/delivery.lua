@@ -30,7 +30,7 @@ end)
 
 RegisterNetEvent("delivery:attemptStop", function()
     if exports["ps-playergroups"]:IsGroupLeader() then 
-        if exports["ps-playergroups"]:GetJobStage() == "On a Delivery Run" then
+        if exports["ps-playergroups"]:GetJobStage() == "DELIVERY" then
             local groupID = exports["ps-playergroups"]:GetGroupID()
             TriggerServerEvent("delivery:stopGroupJob", groupID)
         else 
@@ -115,6 +115,7 @@ RegisterNetEvent("delivery:restartRoute", function()
     DeliveryFinished = false
     HasBox = false
     AllLoaded = false
+    allGrabbed = false
     Wait(2500)
     StopAnimTask(ped, 'anim@heists@box_carry@', 'idle', 1.0)
     DetachEntity(BoxObject, 1, false)
@@ -279,93 +280,6 @@ function LoadBox()
         QBCore.Functions.Notify('Cancelled', 'error', 1500)
     end)
 end
-
-local electricpeds = {}
-local shopelectricpeds = {}
-function CreateGarbagePeds()
-    while true do
-        Citizen.Wait(500)
-        for k = 1, #Delivery.PedList, 1 do
-            v = Delivery.PedList[k]
-            local playerCoords = GetEntityCoords(PlayerPedId())
-            local dist = #(playerCoords - v.coords)
-            if dist < DeliveryConfig.Distance and not electricpeds[k] then
-                local ped = nearPed(v.model, v.coords, v.heading, v.gender, v.animDict, v.animName, v.scenario)
-                electricpeds[k] = {ped = ped}
-            end
-            if dist >= DeliveryConfig.Distance and electricpeds[k] then
-                if DeliveryConfig.Fade then
-                    for i = 255, 0, -51 do
-                        Citizen.Wait(50)
-                        SetEntityAlpha(electricpeds[k].ped, i, false)
-                    end
-                end
-                DeletePed(electricpeds[k].ped)
-                electricpeds[k] = nil
-            end
-        end
-    end
-end
-
-Citizen.CreateThread(function()
-    exports['qb-target']:AddBoxZone("startdeljob", Delivery.PedList[1].coords, 1, 1, {
-        name="startdeljob",
-        heading=Delivery.PedList[1].heading,
-        debugPoly=false,
-        minZ=Delivery.PedList[1].minZ,
-        maxZ=Delivery.PedList[1].maxZ,
-    }, {
-        options = {
-            {
-                type = "client",
-                event = "delivery:attemptStart",
-                label = 'Start Delivery Run',
-                icon = 'fa-solid fa-circle',
-                canInteract = function()
-                    if DoingDeliveryRoute then return false end
-                    return true
-                end,
-            },
-            {
-                type = "client",
-                event = "delivery:attemptStop",
-                label = 'Stop Working',
-                icon = 'fa-solid fa-circle',
-                canInteract = function()
-                    if DoingDeliveryRoute then return true end
-                    return false
-                end,
-            },
-            {
-                type = "client",
-                event = "delivery:getNewDelivery",
-                label = 'Get Another Delivery',
-                icon = 'fa-solid fa-circle',
-                canInteract = function()
-                    if DeliveryFinished then return true end
-                    return false
-                end,
-            },
-          },
-          distance = 1.5,
-    })
-end)
-
-Citizen.CreateThread(function()
-    CreateGarbagePeds()
-end)
-
-CreateThread(function()
-        local deliveryBlip = AddBlipForCoord(vector3(150.28, -3194.66, 5.86))
-        SetBlipSprite(deliveryBlip, 616)
-        SetBlipDisplay(deliveryBlip, 6)
-        SetBlipScale(deliveryBlip, 0.7)
-        SetBlipAsShortRange(deliveryBlip, true)
-        SetBlipColour(deliveryBlip, 2)
-        BeginTextCommandSetBlipName("STRING")
-        AddTextComponentSubstringPlayerName("Delivery Depot")
-        EndTextCommandSetBlipName(deliveryBlip)
-end)
     
 RegisterNetEvent("delivery:grabLoadPackage", function()
     local groupID = exports["ps-playergroups"]:GetGroupID()
@@ -382,55 +296,6 @@ RegisterNetEvent("delivery:grabLoadPackage", function()
         TriggerEvent("QBCore:Notify", "You have all the packages you need, head to the delivery point", "primary")
     end
 end)
-
-function nearPed(model, coords, heading, gender, animDict, animName, scenario)
-	RequestModel(GetHashKey(model))
-	while not HasModelLoaded(GetHashKey(model)) do
-		Citizen.Wait(1)
-	end
-	if gender == 'male' then
-		genderNum = 4
-	elseif gender == 'female' then 
-		genderNum = 5
-	else
-		print("No gender provided! Check your configuration!")
-	end
-	if DeliveryConfig.MinusOne then 
-		local x, y, z = table.unpack(coords)
-		ped = CreatePed(genderNum, GetHashKey(model), x, y, z - 1, heading, false, true)
-		table.insert(shopelectricpeds, ped)
-	else
-		ped = CreatePed(genderNum, GetHashKey(v.model), coords, heading, false, true)
-		table.insert(shopelectricpeds, ped)
-	end
-	SetEntityAlpha(ped, 0, false)
-	if DeliveryConfig.Frozen then
-		FreezeEntityPosition(ped, true)
-	end
-	if DeliveryConfig.Invincible then
-		SetEntityInvincible(ped, true)
-	end
-	if DeliveryConfig.Stoic then
-		SetBlockingOfNonTemporaryEvents(ped, true)
-	end
-	if animDict and animName then
-		RequestAnimDict(animDict)
-		while not HasAnimDictLoaded(animDict) do
-			Citizen.Wait(1)
-		end
-		TaskPlayAnim(ped, animDict, animName, 8.0, 0, -1, 1, 0, 0, 0)
-	end
-	if scenario then
-		TaskStartScenarioInPlace(ped, scenario, 0, true)
-	end
-	if DeliveryConfig.Fade then
-		for i = 0, 255, 51 do
-			Citizen.Wait(50)
-			SetEntityAlpha(ped, i, false)
-		end
-	end
-	return ped
-end --End of the Jimathy stuff
 
 RegisterNetEvent("delivery:toggleAllLoaded", function(status)
     AllLoaded = status

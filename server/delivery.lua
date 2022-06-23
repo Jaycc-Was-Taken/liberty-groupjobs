@@ -3,48 +3,53 @@ local deliveryJobs = {}
 
 RegisterServerEvent('delivery:createGroupJob', function(groupID)
     local src = source
-    if FindDeliveryJobById(groupID) == 0 then 
-        deliveryJobs[#deliveryJobs+1] = {groupID = groupID, truckID = 0, routes=5, currentRoute=0, boxes=0, dropoffAmount=0, totalDropped=0, boxesGrabbed = 0, boxesLoaded = 0}
+    local members = exports["ps-playergroups"]:getGroupMembers(groupID)
+    if #members <= Delivery.MaxGroupSize then
+        if FindDeliveryJobById(groupID) == 0 then 
+            deliveryJobs[#deliveryJobs+1] = {groupID = groupID, truckID = 0, routes=5, currentRoute=0, boxes=0, dropoffAmount=0, totalDropped=0, boxesGrabbed = 0, boxesLoaded = 0}
 
-        local jobID = #deliveryJobs
+            local jobID = #deliveryJobs
 
-        local VanSpawn = Delivery.VanSpawns[math.random(#Delivery.VanSpawns)]
-        local car = CreateVehicle("rumpo", VanSpawn.x, VanSpawn.y, VanSpawn.z, VanSpawn.w, true, true)
-        
-        while not DoesEntityExist(car) do --Find delivery vehicle hash
-            Wait(25)
-        end
-        if DoesEntityExist(car) then
-            SetVehicleNumberPlateText(car, "DELIV"..tostring(math.random(100, 999)))
-            SetVehicleDoorsLocked(car, 1)
-            SetEntityDistanceCullingRadius(car, 999999999.0)
-            Wait(500) -- Gotta wait here so the plate can be grabbed correctly? Not sure why it takes the server so long to register it.
-
-            deliveryJobs[jobID]["truckID"] = car
-            deliveryJobs[jobID]["route"] = PickRandomDeliveryRoute()
-            local plate = GetVehicleNumberPlateText(car)
-            local members = exports["ps-playergroups"]:getGroupMembers(groupID)
-            local groupAmount = #members
-            if groupAmount == 1 then
-                deliveryJobs[jobID]["dropoffAmount"] = 4
-            elseif groupAmount == 2 then
-                deliveryJobs[jobID]["dropoffAmount"] = 6
-            elseif groupAmount == 3 then
-                deliveryJobs[jobID]["dropoffAmount"] = 9
-            else
-                deliveryJobs[jobID]["dropoffAmount"] = 12
+            local VanSpawn = Delivery.VanSpawns[math.random(#Delivery.VanSpawns)]
+            local car = CreateVehicle("rumpo", VanSpawn.x, VanSpawn.y, VanSpawn.z, VanSpawn.w, true, true)
+            
+            while not DoesEntityExist(car) do --Find delivery vehicle hash
+                Wait(25)
             end
-            for i=1, #members do 
-                TriggerClientEvent('vehiclekeys:client:SetOwner', members[i], plate)
-                Wait(100)
-                TriggerClientEvent("delivery:loadBoxesTarget", members[i], NetworkGetNetworkIdFromEntity(deliveryJobs[jobID]["truckID"]))
-                TriggerClientEvent("delivery:toggleDeliveryRoute", members[i], true)
-                TriggerClientEvent("QBCore:Notify", members[i], "Load the boxes from the shelves in to the van", "success")
+            if DoesEntityExist(car) then
+                SetVehicleNumberPlateText(car, "DELIV"..tostring(math.random(100, 999)))
+                SetVehicleDoorsLocked(car, 1)
+                SetEntityDistanceCullingRadius(car, 999999999.0)
+                Wait(500) -- Gotta wait here so the plate can be grabbed correctly? Not sure why it takes the server so long to register it.
+
+                deliveryJobs[jobID]["truckID"] = car
+                deliveryJobs[jobID]["route"] = PickRandomDeliveryRoute()
+                local plate = GetVehicleNumberPlateText(car)
+                local members = exports["ps-playergroups"]:getGroupMembers(groupID)
+                local groupAmount = #members
+                if groupAmount == 1 then
+                    deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs1Person
+                elseif groupAmount == 2 then
+                    deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs2People
+                elseif groupAmount == 3 then
+                    deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs3People
+                else
+                    deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs4People
+                end
+                for i=1, #members do 
+                    TriggerClientEvent('vehiclekeys:client:SetOwner', members[i], plate)
+                    Wait(100)
+                    TriggerClientEvent("delivery:loadBoxesTarget", members[i], NetworkGetNetworkIdFromEntity(deliveryJobs[jobID]["truckID"]))
+                    TriggerClientEvent("delivery:toggleDeliveryRoute", members[i], true)
+                    TriggerClientEvent("QBCore:Notify", members[i], "Load the boxes from the shelves in to the van", "success")
+                end
+                exports["ps-playergroups"]:setJobStatus(groupID, "DELIVERY")
             end
-            exports["ps-playergroups"]:setJobStatus(groupID, "On a Delivery Run")
+        else 
+            print("no group id found in jobs")
         end
-    else 
-        print("no group id found in jobs")
+    else
+        TriggerClientEvent("QBCore:Notify", src, "You have too many people in your group, come back with "..Delivery.MaxGroupSize.. "or less.", "error")
     end
 end)
 RegisterServerEvent("delivery:stopGroupJob", function(groupID)
@@ -52,12 +57,11 @@ RegisterServerEvent("delivery:stopGroupJob", function(groupID)
     local jobID = FindDeliveryJobById(groupID)
     local truckCoords = GetEntityCoords(deliveryJobs[jobID]["truckID"])
 
-    -- if #(truckCoords - Delivery.Blip) < 30 then
         DeleteEntity(deliveryJobs[jobID]["truckID"])
 
         exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "deliveryDropoff")
         local members = exports["ps-playergroups"]:getGroupMembers(groupID)
-        local groupPayout = (deliveryJobs[jobID]["totalDropped"] * 130.00)
+        local groupPayout = (deliveryJobs[jobID]["totalDropped"] * Delivery.JobPayout)
 
         for i=1, #members do
             TriggerClientEvent("delivery:endRoute", members[i])
@@ -65,19 +69,21 @@ RegisterServerEvent("delivery:stopGroupJob", function(groupID)
                 local payout = (groupPayout / #members)
                 local m = QBCore.Functions.GetPlayer(members[i])
                 local cid = m.PlayerData.citizenid
-                if exports["tnj-buffs"]:HasBuff(cid, "oiler") then
+                if Delivery.BuffsEnabled and exports["ps-buffs"]:HasBuff(cid, "oiler") then
                     payout = payout * 1.2
                 end
-                exports['7rp-payslip']:AddMoney(cid, payout)
-                TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the On a Delivery Run", "success")
+                if Config.Payslip then
+                    exports['7rp-payslip']:AddMoney(cid, payout)
+                    TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the delivery work you've done", "success")
+                else
+                    m.Functions.AddMoney(Config.PayoutType, payout, 'Delivery')
+                    TriggerClientEvent("QBCore:Notify", members[i], "You were paid $"..payout.." for the delivery work you've done", "success")
+                end
             end
         end
 
         deliveryJobs[jobID] = nil
         exports["ps-playergroups"]:setJobStatus(groupID, "WAITING")
-    -- else 
-    --     TriggerClientEvent("QBCore:Notify", src "Your truck is not inside the facility", "error")
-    -- end
 end)
 
 RegisterServerEvent("delivery:NewDelivery", function(groupID)
@@ -87,21 +93,21 @@ RegisterServerEvent("delivery:NewDelivery", function(groupID)
     exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "deliveryDropoff")
     local members = exports["ps-playergroups"]:getGroupMembers(groupID)
     local groupPayout = (deliveryJobs[jobID]["totalDropped"] * 130.00)
+    deliveryJobs[jobID]["boxes"] = 0
+    deliveryJobs[jobID]["totalDropped"] = 0
+    deliveryJobs[jobID]["boxesGrabbed"] = 0
+    deliveryJobs[jobID]["boxesLoaded"] = 0
     for i=1, #members do
         TriggerClientEvent("delivery:restartRoute", members[i])
+        TriggerClientEvent("delivery:resetDropoff", members[i])
         if groupPayout > 0 then
             local payout = (groupPayout / #members)
             local m = QBCore.Functions.GetPlayer(members[i])
             local cid = m.PlayerData.citizenid
-            if exports["tnj-buffs"]:HasBuff(cid, "oiler") then
+            if exports["ps-buffs"]:HasBuff(cid, "oiler") then
                 payout = payout * 1.2
             end
             exports['7rp-payslip']:AddMoney(cid, payout)
-            deliveryJobs[jobID]["boxes"] = 0
-            deliveryJobs[jobID]["totalDropped"] = 0
-            deliveryJobs[jobID]["boxesGrabbed"] = 0
-            deliveryJobs[jobID]["boxesLoaded"] = 0
-            TriggerClientEvent("delivery:resetDropoff", members[i])
             TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the On a Delivery Run", "success")
             Wait(500)
             TriggerClientEvent("QBCore:Notify", members[i], "Load up your van again and head to the new delivery", "primary")
@@ -119,13 +125,13 @@ RegisterServerEvent("delivery:updateBoxes", function(groupID)
         local members = exports["ps-playergroups"]:getGroupMembers(groupID)
         local groupAmount = #members
         if groupAmount == 1 then
-            deliveryJobs[jobID]["dropoffAmount"] = 4
+            deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs1Person
         elseif groupAmount == 2 then
-            deliveryJobs[jobID]["dropoffAmount"] = 6
+            deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs2People
         elseif groupAmount == 3 then
-            deliveryJobs[jobID]["dropoffAmount"] = 9
+            deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs3People
         else
-            deliveryJobs[jobID]["dropoffAmount"] = 12
+            deliveryJobs[jobID]["dropoffAmount"] = Delivery.MaxJobs4People
         end
         local members = exports["ps-playergroups"]:getGroupMembers(groupID)
         for i=1, #members do

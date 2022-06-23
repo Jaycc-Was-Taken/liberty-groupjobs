@@ -1,34 +1,21 @@
 --Devyn Sanitation https://github.com/devin-monro/devyn-sanitation
 
 Garbage = {}
+Garbage.MaxGroupSize = 4 -- Max amount of people in a group that can start the job. Suggested 4 as there is only 4 seats in the truck.
+
+Garbage.JobPayout = 44 -- Amount to get paid per bag grabbed. Divided evenly amoung the group
+
+Garbage.BuffsEnabled = true -- True or False to enable the liberty buff system on payout.
+
+Garbage.MaxBags1Person = 6 -- 1 person in group. Amount of bags to be picked up per site.
+Garbage.MaxBags2People = 8 -- 2 people in group. Amount of bags to be picked up per site.
+Garbage.MaxBags3People = 12 -- 3 people in group. Amount of bags to be picked up per site.
+Garbage.MaxBags4People = 16 -- 4 people in group. Amount of bags to be picked up per site.
 
 Garbage.Blip = vector3(-341.56, -1541.3, 26.72)
 
 Garbage.TruckSpawns = {
     vector4(-326.37, -1524.49, 27.54, 267.03),
-}
-
-Garbage.PedList = {
-    { model = "s_m_y_garbage", 
-    coords = vector3(-354.96, -1542.28, 27.72),
-    minZ = 25.72,
-    maxZ = 29.72, 
-    heading = 270.0, 
-    gender = "male", 
-    scenario = "", 
-    },
-}
-
-GarbageConfig = {
-    Blips = true,
-    BlipNamer = true,
-    Pedspawn = true,
-    Invincible = true,
-    Frozen = true,
-    Stoic = true,
-    Fade = true,
-    Distance = 40.0,
-    MinusOne = true,
 }
 
 Garbage.Rewards = {

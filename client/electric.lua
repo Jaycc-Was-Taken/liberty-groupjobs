@@ -3,85 +3,6 @@ local jobLocation = vector3(0.0, 0.0, 0.0)
 local jobSite = 0
 local onJob = false 
 
-
-local electricpeds = {}
-local shopelectricpeds = {}
-
-function Createelectricpeds()
-    while true do
-        Citizen.Wait(500)
-        for k = 1, #Electric.PedList, 1 do
-            v = Electric.PedList[k]
-            local playerCoords = GetEntityCoords(PlayerPedId())
-            local dist = #(playerCoords - v.coords)
-            if dist < ElectricConfig.Distance and not electricpeds[k] then
-                local ped = nearPed(v.model, v.coords, v.heading, v.gender, v.animDict, v.animName, v.scenario)
-                electricpeds[k] = {ped = ped}
-            end
-            if dist >= ElectricConfig.Distance and electricpeds[k] then
-                if ElectricConfig.Fade then
-                    for i = 255, 0, -51 do
-                        Citizen.Wait(50)
-                        SetEntityAlpha(electricpeds[k].ped, i, false)
-                    end
-                end
-                DeletePed(electricpeds[k].ped)
-                electricpeds[k] = nil
-            end
-        end
-    end
-end
-
-CreateThread(function()
-    local electricBlip = AddBlipForCoord(Electric.PedList[1].coords)
-    SetBlipSprite(electricBlip, 354)
-    SetBlipDisplay(electricBlip, 6)
-    SetBlipScale(electricBlip, 0.8)
-    SetBlipAsShortRange(electricBlip, true)
-    SetBlipColour(electricBlip, 5)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentSubstringPlayerName("LS Water & Power")
-    EndTextCommandSetBlipName(electricBlip)
-end)
-
-Citizen.CreateThread(function()
-    exports['qb-target']:AddBoxZone("startelectricjob", Electric.PedList[1].coords, 1, 1, {
-        name="startelectricjob",
-        heading=Electric.PedList[1].heading,
-        debugPoly=false,
-        minZ=Electric.PedList[1].minZ,
-        maxZ=Electric.PedList[1].maxZ,
-    }, {
-        options = {
-            {
-                type = "client",
-                event = "electric:attemptStart",
-                label = 'Start Electrician Work',
-                icon = 'fa-solid fa-circle',
-                canInteract = function()
-                    if exports["ps-playergroups"]:GetJobStage() ~= "ELECTRICIAN RUN" then return true end
-                    return false
-                end,
-            },
-            {
-                type = "client",
-                event = "electric:attemptStop",
-                icon = "bi bi-arrow-right-circle-fill",
-                label = "End Work",
-                canInteract = function()
-                    if exports["ps-playergroups"]:GetJobStage() == "ELECTRICIAN RUN" then return true end
-                    return false
-                end,
-            },
-          },
-          distance = 1.5,
-    })
-end)
-
-Citizen.CreateThread(function()
-    Createelectricpeds()
-end)
-
 RegisterNetEvent("electric:attemptStart", function()
     if exports["ps-playergroups"]:IsGroupLeader() then 
         if exports["ps-playergroups"]:GetJobStage() == "WAITING" then
@@ -109,7 +30,7 @@ end)
 
 RegisterNetEvent("electric:attemptStop", function()
     if exports["ps-playergroups"]:IsGroupLeader() then 
-        if exports["ps-playergroups"]:GetJobStage() == "ELECTRICIAN RUN" then
+        if exports["ps-playergroups"]:GetJobStage() == "ELECTRICIAN" then
             local groupID = exports["ps-playergroups"]:GetGroupID()
             TriggerServerEvent("electric:stopGroupJob", groupID)
         else 
@@ -141,7 +62,7 @@ RegisterNetEvent("electric:startRoute", function(worksite)
                         sitename = v.name,
                     },
                     canInteract = function()
-                        if exports["ps-playergroups"]:GetJobStage() == "ELECTRICIAN RUN" then return true end
+                        if exports["ps-playergroups"]:GetJobStage() == "ELECTRICIAN" then return true end
                         return false
                     end,
                 },
@@ -161,9 +82,9 @@ function nearPed(model, coords, heading, gender, animDict, animName, scenario)
 	elseif gender == 'female' then 
 		genderNum = 5
 	else
-		print("No gender provided! Check your configuration!")
+		print("No gender provided! Check your uration!")
 	end
-	if ElectricConfig.MinusOne then 
+	if Electric.MinusOne then 
 		local x, y, z = table.unpack(coords)
 		ped = CreatePed(genderNum, GetHashKey(model), x, y, z - 1, heading, false, true)
 		table.insert(shopelectricpeds, ped)
@@ -172,13 +93,13 @@ function nearPed(model, coords, heading, gender, animDict, animName, scenario)
 		table.insert(shopelectricpeds, ped)
 	end
 	SetEntityAlpha(ped, 0, false)
-	if ElectricConfig.Frozen then
+	if Electric.Frozen then
 		FreezeEntityPosition(ped, true)
 	end
-	if ElectricConfig.Invincible then
+	if Electric.Invincible then
 		SetEntityInvincible(ped, true)
 	end
-	if ElectricConfig.Stoic then
+	if Electric.Stoic then
 		SetBlockingOfNonTemporaryEvents(ped, true)
 	end
 	if animDict and animName then
@@ -191,7 +112,7 @@ function nearPed(model, coords, heading, gender, animDict, animName, scenario)
 	if scenario then
 		TaskStartScenarioInPlace(ped, scenario, 0, true)
 	end
-	if ElectricConfig.Fade then
+	if Electric.Fade then
 		for i = 0, 255, 51 do
 			Citizen.Wait(50)
 			SetEntityAlpha(ped, i, false)
@@ -223,7 +144,7 @@ RegisterNetEvent("electric:repairWork", function(data)
     local ped = PlayerPedId()
     local sitename = data.args.sitename
     local groupID = exports["ps-playergroups"]:GetGroupID()
-    local worktime = math.random(3, 6) * 5000
+    local worktime = math.random(Electric.WorkTimeMin, Electric.WorkTimeMax) * Electric.WorkTimeMultiplier
     QBCore.Functions.Progressbar("repairwork", "Repairing Electrical Equipment", worktime, false, true, {
         disableMovement = true,
         disableCarMovement = true,

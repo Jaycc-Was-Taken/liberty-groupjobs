@@ -5,56 +5,61 @@ local garbageJobs = {}
 
 RegisterServerEvent("garbage:createGroupJob", function(groupID)
     local src = source
-    if FindGarbageJobById(groupID) == 0 then 
-        garbageJobs[#garbageJobs+1] = {groupID = groupID, truckID = 0, routes=10, currentRoute=0, bags=0, pickupAmount=0, totalCollected=0}
+    local members = exports["ps-playergroups"]:getGroupMembers(groupID)
+    if #members <= Garbage.MaxGroupSize then
+        if FindGarbageJobById(groupID) == 0 then 
+            garbageJobs[#garbageJobs+1] = {groupID = groupID, truckID = 0, routes=10, currentRoute=0, bags=0, pickupAmount=0, totalCollected=0}
 
-        local jobID = #garbageJobs
+            local jobID = #garbageJobs
 
-        local TruckSpawn = Garbage.TruckSpawns[math.random(#Garbage.TruckSpawns)]
-        local car = CreateVehicle("trash", TruckSpawn.x, TruckSpawn.y, TruckSpawn.z, TruckSpawn.w, true, true)
+            local TruckSpawn = Garbage.TruckSpawns[math.random(#Garbage.TruckSpawns)]
+            local car = CreateVehicle("trash", TruckSpawn.x, TruckSpawn.y, TruckSpawn.z, TruckSpawn.w, true, true)
 
-        while not DoesEntityExist(car) do
-            Wait(25)
-        end
-        if DoesEntityExist(car) then
-            SetVehicleNumberPlateText(car, "GARB"..tostring(math.random(1000, 9999)))
-            SetVehicleDoorsLocked(car, 1)
-            Wait(500) -- Gotta wait here so the plate can be grabbed correctly? Not sure why it takes the server so long to register it.
-
-            garbageJobs[jobID]["truckID"] = car
-            garbageJobs[jobID]["route"] = PickRandomGarbageRoute()
-            local plate = GetVehicleNumberPlateText(car)
-            local members = exports["ps-playergroups"]:getGroupMembers(groupID)
-            local groupAmount = #members
-            if groupAmount == 1 then
-                garbageJobs[jobID]["pickupAmount"] = 6
-            elseif groupAmount == 2 then
-                garbageJobs[jobID]["pickupAmount"] = 8
-            elseif groupAmount == 3 then
-                garbageJobs[jobID]["pickupAmount"] = 12
-            else
-                garbageJobs[jobID]["pickupAmount"] = 16
+            while not DoesEntityExist(car) do
+                Wait(25)
             end
-            for i=1, #members do 
-                TriggerClientEvent('vehiclekeys:client:SetOwner', members[i], plate)
-                TriggerClientEvent("garbage:updatePickup", members[i], Garbage.Locations[garbageJobs[jobID]["route"]]["coords"])
-                Wait(100)
-                TriggerClientEvent("garbage:startRoute", members[i], NetworkGetNetworkIdFromEntity(car))
-            end
-            exports["ps-playergroups"]:setJobStatus(groupID, "GARBAGE RUN")
-        end
+            if DoesEntityExist(car) then
+                SetVehicleNumberPlateText(car, "GARB"..tostring(math.random(1000, 9999)))
+                SetVehicleDoorsLocked(car, 1)
+                Wait(500) -- Gotta wait here so the plate can be grabbed correctly? Not sure why it takes the server so long to register it.
 
-        exports["ps-playergroups"]:CreateBlipForGroup(groupID, "garbagePickup", {
-            label = "Pickup", 
-            coords = Garbage.Locations[garbageJobs[jobID]["route"]]["coords"], 
-            sprite = 318, 
-            color = 2, 
-            scale = 1.0, 
-            route = true,
-            routeColor = 2,
-        })
-    else 
-        print("no group id found in garbageJobs")
+                garbageJobs[jobID]["truckID"] = car
+                garbageJobs[jobID]["route"] = PickRandomGarbageRoute()
+                local plate = GetVehicleNumberPlateText(car)
+                local members = exports["ps-playergroups"]:getGroupMembers(groupID)
+                local groupAmount = #members
+                if groupAmount == 1 then
+                    garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags1Person
+                elseif groupAmount == 2 then
+                    garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags2People
+                elseif groupAmount == 3 then
+                    garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags3People
+                else
+                    garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags4People
+                end
+                for i=1, #members do 
+                    TriggerClientEvent('vehiclekeys:client:SetOwner', members[i], plate)
+                    TriggerClientEvent("garbage:updatePickup", members[i], Garbage.Locations[garbageJobs[jobID]["route"]]["coords"])
+                    Wait(100)
+                    TriggerClientEvent("garbage:startRoute", members[i], NetworkGetNetworkIdFromEntity(car))
+                end
+                exports["ps-playergroups"]:setJobStatus(groupID, "GARBAGE")
+            end
+
+            exports["ps-playergroups"]:CreateBlipForGroup(groupID, "garbagePickup", {
+                label = "Pickup", 
+                coords = Garbage.Locations[garbageJobs[jobID]["route"]]["coords"], 
+                sprite = 318, 
+                color = 2, 
+                scale = 1.0, 
+                route = true,
+                routeColor = 2,
+            })
+        else 
+            print("no group id found in garbageJobs")
+        end
+    else
+        TriggerClientEvent("QBCore:Notify", src, "You have too many people in your group, come back with "..Garbage.MaxGroupSize.. "or less.", "error")
     end
 end)
 
@@ -68,7 +73,7 @@ RegisterServerEvent("garbage:stopGroupJob", function(groupID)
 
         exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "garbagePickup")
         local members = exports["ps-playergroups"]:getGroupMembers(groupID)
-        local groupPayout = (garbageJobs[jobID]["totalCollected"] * 44.00)
+        local groupPayout = (garbageJobs[jobID]["totalCollected"] * Garbage.JobPayout)
 
         for i=1, #members do
             TriggerClientEvent("garbage:endRoute", members[i])
@@ -76,11 +81,18 @@ RegisterServerEvent("garbage:stopGroupJob", function(groupID)
                 local payout = (groupPayout / #members)
                 local m = QBCore.Functions.GetPlayer(members[i])
                 local cid = m.PlayerData.citizenid
-                if exports["tnj-buffs"]:HasBuff(cid, "oiler") then
-                    payout = payout * 1.2
+                local m = QBCore.Functions.GetPlayer(members[i])
+                local cid = m.PlayerData.citizenid
+                if Config.BuffsEnabled and exports["ps-buffs"]:HasBuff(cid, Config.BuffName) then
+                    payout = payout * ((Config.BuffAmount/100) + 1)
                 end
-                exports['7rp-payslip']:AddMoney(cid, payout)
-                TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to payslip for your garbage run", "success")
+                if Config.Payslip then
+                    exports['7rp-payslip']:AddMoney(cid, payout)
+                    TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the sanitation work you've done", "success")
+                else
+                    m.Functions.AddMoney(Config.PayoutType, payout, 'Sanitation')
+                    TriggerClientEvent("QBCore:Notify", members[i], "You were paid $"..payout.." for the sanitation work you've done", "success")
+                end
             end
         end
 
@@ -106,13 +118,13 @@ RegisterServerEvent("garbage:updateBags", function(groupID)
         local members = exports["ps-playergroups"]:getGroupMembers(groupID)
         local groupAmount = #members
         if groupAmount == 1 then
-            garbageJobs[jobID]["pickupAmount"] = 6
+            garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags1Person
         elseif groupAmount == 2 then
-            garbageJobs[jobID]["pickupAmount"] = 8
+            garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags2People
         elseif groupAmount == 3 then
-            garbageJobs[jobID]["pickupAmount"] = 12
+            garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags3People
         else
-            garbageJobs[jobID]["pickupAmount"] = 16
+            garbageJobs[jobID]["pickupAmount"] = Garbage.MaxBags4People
         end
         local newRoute = PickRandomGarbageRoute()
         while newRoute == garbageJobs[jobID]["currentRoute"] do
