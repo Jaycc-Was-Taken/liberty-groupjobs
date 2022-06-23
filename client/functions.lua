@@ -2,6 +2,7 @@ local QBCore = exports["qb-core"]:GetCoreObject()
 
 
 local peds = {}
+local jobPeds = {}
 local nearPed = function(model, coords, heading, gender, animDict, animName, scenario)
 	RequestModel(GetHashKey(model))
 	while not HasModelLoaded(GetHashKey(model)) do
@@ -17,10 +18,10 @@ local nearPed = function(model, coords, heading, gender, animDict, animName, sce
 	if Config.MinusOne then 
 		local x, y, z = table.unpack(coords)
 		ped = CreatePed(genderNum, GetHashKey(model), x, y, z - 1, heading, false, true)
-		table.insert(peds, ped)
+		table.insert(jobPeds, ped)
 	else
 		ped = CreatePed(genderNum, GetHashKey(v.model), coords, heading, false, true)
-		table.insert(peds, ped)
+		table.insert(jobPeds, ped)
 	end
 	SetEntityAlpha(ped, 0, false)
 	if Config.Frozen then
@@ -83,7 +84,7 @@ local CreatePeds = function()
                         SetEntityAlpha(peds[k].ped, i, false)
                     end
                 end
-                DeletePed(jobPeds[k].ped)
+                DeletePed(peds[k].ped)
                 peds[k] = nil
             end
         end

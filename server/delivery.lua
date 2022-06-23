@@ -209,15 +209,6 @@ RegisterServerEvent('delivery:loadPackage', function(groupID)
             route = true,
             routeColor = 2,
         })
-        -- exports["ps-playergroups"]:CreateBlipForGroup(groupID, "deliveryDropoff", {
-        --     label = "Dropoff", 
-        --     coords = Delivery.Routes[newRoute].coords, 
-        --     sprite = 162, 
-        --     color = 11, 
-        --     scale = 1.0, 
-        --     route = true,
-        --     routeColor = 2,
-        -- })
     end
 end)
 

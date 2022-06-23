@@ -15,9 +15,8 @@ Delivery.BoxPickup = {
     maxZ = 7.86,
     name = "boxpickup",
 }
-Delivery.VanSpawns = {
-    vector4(161.92, -3204.0, 5.96, 272.03),
-    vector4(161.03, -3196.5, 5.98, 271.88)
+Delivery.VanSpawn = {
+    vector4(161.92, -3204.0, 5.96, 272.03)
 }
 Delivery.Routes = {
     [1] = {
