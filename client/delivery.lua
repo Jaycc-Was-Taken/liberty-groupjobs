@@ -99,8 +99,11 @@ RegisterNetEvent("delivery:endRoute", function()
     local BDSDoor = {'door_pside_r', 'door_dside_r'}
     exports['qb-target']:RemoveTargetBone(BDSDoor, "Grab Package")
     exports['qb-target']:RemoveZone(Delivery.BoxPickup.name, "Grab a Box")
-    DoingDeliveryRoute = false
+    DoingDeliveryRoute = true
+    DeliveryFinished = false
     HasBox = false
+    AllLoaded = false
+    allGrabbed = false
     Truck = nil
     dropoffLocation = vector3(0.0, 0.0, 0.0)
     Wait(2500)
@@ -264,6 +267,24 @@ function GrabBox()
         TakeBoxAnim()
     end, function() -- Cancel
         QBCore.Functions.Notify('Cancelled', 'error', 1500)
+        HasBox = false
+    end)
+end
+
+function GrabDepotBox()
+    local groupID = exports["ps-playergroups"]:GetGroupID()
+    QBCore.Functions.Progressbar("grabdepotpackage", "Grabbing Package", 2000, false, true, {
+        disableMovement = true,
+        disableCarMovement = true,
+        disableMouse = false,
+        disableCombat = true,
+    }, {}, {}, {}, function() -- Done
+        HasBox = true
+        TakeBoxAnim()
+        TriggerServerEvent('delivery:takePackage', groupID)
+    end, function() -- Cancel
+        QBCore.Functions.Notify('Cancelled', 'error', 1500)
+        HasBox = false
     end)
 end
 
@@ -282,13 +303,9 @@ function LoadBox()
 end
     
 RegisterNetEvent("delivery:grabLoadPackage", function()
-    local groupID = exports["ps-playergroups"]:GetGroupID()
     if not allGrabbed then
         if not HasBox then
-            GrabBox()
-            HasBox = true
-            Wait(2250)
-            TriggerServerEvent('delivery:takePackage', groupID)
+            GrabDepotBox()
         else
             TriggerEvent("QBCore:Notify", "You already have a package", "error")
         end
