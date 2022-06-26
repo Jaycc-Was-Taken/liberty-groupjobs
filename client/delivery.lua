@@ -30,7 +30,7 @@ end)
 
 RegisterNetEvent("delivery:attemptStop", function()
     if exports["ps-playergroups"]:IsGroupLeader() then 
-        if exports["ps-playergroups"]:GetJobStage() == "DELIVERY" then
+        if exports["ps-playergroups"]:GetJobStage() == "DELIVERY" or exports["ps-playergroups"]:GetJobStage() == "DELIVERY FINISHED" then
             local groupID = exports["ps-playergroups"]:GetGroupID()
             TriggerServerEvent("delivery:stopGroupJob", groupID)
         else 
