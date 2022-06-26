@@ -10,11 +10,9 @@ Config = {
     Distance = 40.0,
     MinusOne = true,
 }
-Config.BuffsEnabled = false -- If you use the ps-buffs or not and want the payout to be altered by a buff
+Config.BuffsEnabled = true -- If you use the ps-buffs or not and want the payout to be altered by a buff
 Config.BuffName = "oiler" -- Name of the buff
 Config.BuffAmount = 20 -- Percent
-Config.Payslip = false -- I use 7rp-payslip so its stup for that, if you dont use it just put this to false
-Config.PayoutType = 'bank' -- Bank or cash, only used if Config.Payslip = false
 Config.PedList = {
     [1] = {  -- Towing
         model = "s_m_m_autoshop_02",
@@ -51,6 +49,7 @@ Config.PedList = {
             color = 5,
             scale = 0.7,
             text = "Towing HQ",
+            enable = true,
         },
     },
     [2] = { -- Garbage
@@ -87,7 +86,8 @@ Config.PedList = {
             sprite = 318,
             color = 2,
             scale = 0.7,
-            text = "Sanitation"
+            text = "Sanitation",
+            enable = true,
         },
     },
     [3] = { -- Delivery 
@@ -105,8 +105,8 @@ Config.PedList = {
                 label = 'Start Delivery Run',
                 icon = 'fa-solid fa-circle',
                 canInteract = function()
-                    if DoingDeliveryRoute then return false end
-                    return true
+                    if exports["ps-playergroups"]:GetJobStage() == "WAITING" then return true end
+                    return false
                 end,
             },
             {
@@ -115,7 +115,7 @@ Config.PedList = {
                 label = 'Stop Working',
                 icon = 'fa-solid fa-circle',
                 canInteract = function()
-                    if DoingDeliveryRoute then return true end
+                    if exports["ps-playergroups"]:GetJobStage() == "DELIVERY" or exports["ps-playergroups"]:GetJobStage() == "DELIVERY FINISHED" then return true end
                     return false
                 end,
             },
@@ -125,7 +125,7 @@ Config.PedList = {
                 label = 'Get Another Delivery',
                 icon = 'fa-solid fa-circle',
                 canInteract = function()
-                    if DeliveryFinished then return true end
+                    if exports["ps-playergroups"]:GetJobStage() == "DELIVERY FINISHED" then return true end
                     return false
                 end,
             },
@@ -134,7 +134,8 @@ Config.PedList = {
             sprite = 616,
             color = 2,
             scale = 0.7,
-            text = "Delivery Depot"
+            text = "Delivery Depot",
+            enable = true,
         },
     },
     [4] = { -- Electrician
@@ -172,6 +173,7 @@ Config.PedList = {
             color = 5,
             scale = 1.0,
             text = "LS Water & Power",
+            enable = true,
         },
     },
 }

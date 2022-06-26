@@ -93,15 +93,17 @@ end
 local blips = {}
 function CreateBlips()
     for k,v in pairs(Config.PedList) do
-        blips[k] = AddBlipForCoord(v.coords)
-        SetBlipSprite(blips[k], v.blipInfo.sprite)
-        SetBlipDisplay(blips[k], 4)
-        SetBlipScale(blips[k], v.blipInfo.scale)
-        SetBlipAsShortRange(blips[k], true)
-        SetBlipColour(blips[k], v.blipInfo.color)
-        BeginTextCommandSetBlipName("STRING")
-        AddTextComponentSubstringPlayerName(v.blipInfo.text)
-        EndTextCommandSetBlipName(blips[k])    
+        if v.blipInfo.enable then
+            blips[k] = AddBlipForCoord(v.coords)
+            SetBlipSprite(blips[k], v.blipInfo.sprite)
+            SetBlipDisplay(blips[k], 4)
+            SetBlipScale(blips[k], v.blipInfo.scale)
+            SetBlipAsShortRange(blips[k], true)
+            SetBlipColour(blips[k], v.blipInfo.color)
+            BeginTextCommandSetBlipName("STRING")
+            AddTextComponentSubstringPlayerName(v.blipInfo.text)
+            EndTextCommandSetBlipName(blips[k]) 
+        end   
     end
 end
 CreateThread(function()

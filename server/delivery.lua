@@ -57,6 +57,7 @@ RegisterServerEvent("delivery:stopGroupJob", function(groupID)
     local jobID = FindDeliveryJobById(groupID)
     local truckCoords = GetEntityCoords(deliveryJobs[jobID]["truckID"])
 
+    -- if #(truckCoords - Delivery.Blip) < 30 then
         DeleteEntity(deliveryJobs[jobID]["truckID"])
 
         exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "deliveryDropoff")
@@ -69,21 +70,19 @@ RegisterServerEvent("delivery:stopGroupJob", function(groupID)
                 local payout = (groupPayout / #members)
                 local m = QBCore.Functions.GetPlayer(members[i])
                 local cid = m.PlayerData.citizenid
-                if Config.BuffsEnabled and exports["ps-buffs"]:HasBuff(cid, Config.BuffName) then
-                    payout = payout * ((Config.BuffAmount/100) + 1)
+                if Delivery.BuffsEnabled and exports["ps-buffs"]:HasBuff(cid, "oiler") then
+                    payout = payout * 1.2
                 end
-                if Config.Payslip then
-                    exports['7rp-payslip']:AddMoney(cid, payout)
-                    TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the delivery work you've done", "success")
-                else
-                    m.Functions.AddMoney(Config.PayoutType, payout, 'Delivery')
-                    TriggerClientEvent("QBCore:Notify", members[i], "You were paid $"..payout.." for the delivery work you've done", "success")
-                end
+                exports['7rp-payslip']:AddMoney(cid, payout)
+                TriggerClientEvent("QBCore:Notify", members[i], "$"..payout.." added to your pay check for the On a Delivery Run", "success")
             end
         end
 
         deliveryJobs[jobID] = nil
         exports["ps-playergroups"]:setJobStatus(groupID, "WAITING")
+    -- else 
+    --     TriggerClientEvent("QBCore:Notify", src "Your truck is not inside the facility", "error")
+    -- end
 end)
 
 RegisterServerEvent("delivery:NewDelivery", function(groupID)
@@ -91,6 +90,7 @@ RegisterServerEvent("delivery:NewDelivery", function(groupID)
     local jobID = FindDeliveryJobById(groupID)
 
     exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "deliveryDropoff")
+    exports["ps-playergroups"]:setJobStatus(groupID, "DELIVERY")
     local members = exports["ps-playergroups"]:getGroupMembers(groupID)
     local groupPayout = (deliveryJobs[jobID]["totalDropped"] * 130.00)
     deliveryJobs[jobID]["boxes"] = 0
@@ -144,10 +144,11 @@ RegisterServerEvent("delivery:updateBoxes", function(groupID)
             TriggerClientEvent("QBCore:Notify", members[i], "Return to the depot to load another delivery.", "primary")
         end
         exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "deliveryDropoff")
+        exports["ps-playergroups"]:setJobStatus(groupID, "DELIVERY FINISHED")
     else
         local members = exports["ps-playergroups"]:getGroupMembers(groupID)
         for i=1, #members do
-            TriggerClientEvent("QBCore:Notify", members[i], deliveryJobs[jobID]["boxes"].."/"..deliveryJobs[jobID]["dropoffAmount"].." Boxes Dropped.", "primary")
+            TriggerClientEvent("QBCore:Notify", members[i], deliveryJobs[jobID]["boxes"].."/"..deliveryJobs[jobID]["dropoffAmount"].." Boxes Delivered.", "primary")
         end
     end
 end)
@@ -192,7 +193,7 @@ RegisterServerEvent('delivery:loadPackage', function(groupID)
         end
     elseif deliveryJobs[jobID]["boxesLoaded"] >= deliveryJobs[jobID]["dropoffAmount"] then
         local newRoute = math.random(1, #Delivery.Routes)
-        print(newRoute)
+        --print(newRoute)
         for i=1, #members do
             TriggerClientEvent("QBCore:Notify", members[i], "All packages loaded. Head to the delivery location.", "primary")
             TriggerClientEvent("delivery:toggleAllLoaded", members[i], true)
@@ -209,6 +210,15 @@ RegisterServerEvent('delivery:loadPackage', function(groupID)
             route = true,
             routeColor = 2,
         })
+        -- exports["ps-playergroups"]:CreateBlipForGroup(groupID, "deliveryDropoff", {
+        --     label = "Dropoff", 
+        --     coords = Delivery.Routes[newRoute].coords, 
+        --     sprite = 162, 
+        --     color = 11, 
+        --     scale = 1.0, 
+        --     route = true,
+        --     routeColor = 2,
+        -- })
     end
 end)
 
@@ -223,3 +233,7 @@ end
 function PickRandomDeliveryRoute()
     return math.random(1, #Delivery.Routes)
 end
+
+QBCore.Functions.CreateCallback('delivery:getStatus', function(status)
+    cb(status)
+end)

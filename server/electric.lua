@@ -91,16 +91,11 @@ RegisterServerEvent("electric:stopGroupJob", function(groupID)
                 local payout = (groupPayout / #members)
                 local m = QBCore.Functions.GetPlayer(members[i])
                 local cid = m.PlayerData.citizenid
-                if Config.BuffsEnabled and exports["ps-buffs"]:HasBuff(cid, Config.BuffName) then
-                    payout = payout * ((Config.BuffAmount/100) + 1)
+                if Electric.BuffsEnabled and exports["ps-buffs"]:HasBuff(cid, "oiler") then
+                    payout = payout * 1.2
                 end
-                if Config.Payslip then
-                    exports['7rp-payslip']:AddMoney(cid, payout)
-                    TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the electrician work you've done", "success")
-                else
-                    m.Functions.AddMoney(Config.PayoutType, payout, 'Electric')
-                    TriggerClientEvent("QBCore:Notify", members[i], "You were paid $"..payout.." for the electrician work you've done", "success")
-                end
+                exports['7rp-payslip']:AddMoney(cid, payout)
+                TriggerClientEvent("QBCore:Notify", members[i], "You got $"..payout.." added to your pay check for the electrical work you've done", "success")
             end
         end
 

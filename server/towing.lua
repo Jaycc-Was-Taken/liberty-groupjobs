@@ -65,6 +65,9 @@ end
 RegisterServerEvent("towing:stopGroupJob", function(groupID)
     local src = source
     local jobID = FindTowingJobById(groupID)
+    -- local truckCoords = GetEntityCoords(towJobs[jobID]["truckID"])
+
+    -- if #(truckCoords - Towing.Blip) < 30 then
         DeleteEntity(towJobs[jobID]["truckID"])
 
         exports["ps-playergroups"]:RemoveBlipForGroup(groupID, "newTow")
@@ -95,6 +98,9 @@ RegisterServerEvent("towing:stopGroupJob", function(groupID)
 
         towJobs[jobID] = nil
         exports["ps-playergroups"]:setJobStatus(groupID, "WAITING")
+    -- else 
+    --     TriggerClientEvent("QBCore:Notify", src "Your truck is not inside the facility", "error")
+    -- end
 end)
 
 RegisterServerEvent("towing:newTow", function(groupID)

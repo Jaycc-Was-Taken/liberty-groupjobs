@@ -1,4 +1,15 @@
 Delivery = {}
+Delivery = {
+    Blips = true,
+    BlipNamer = true,
+    Pedspawn = true,
+    Invincible = true,
+    Frozen = true,
+    Stoic = true,
+    Fade = true,
+    Distance = 40.0,
+    MinusOne = true,
+}
 Delivery.MaxGroupSize = 4 -- Max amount of people in a group that can start the job. Suggested 4 as there is only 4 seats in the truck.
 Delivery.JobPayout = 130 -- Amount to get paid per stop. Divided evenly amoung the group
 Delivery.BuffsEnabled = true -- True or False to enable the liberty buff system on payout.
@@ -6,6 +17,9 @@ Delivery.MaxJobs1Person = 4 -- 1 person in group. Amount of jobsites completed b
 Delivery.MaxJobs2People = 6 -- 2 people in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
 Delivery.MaxJobs3People = 9 -- 3 people in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
 Delivery.MaxJobs4People = 12 -- 4 people in group. Amount of jobsites completed before the script sends them to return to the depot and end the run
+Delivery.Blip = {
+    vector3(150.28, -3194.66, 5.86),
+}
 Delivery.BoxPickup = {
     coords = vector3(148.23, -3178.82, 5.86),
     length = 5.2,
@@ -15,8 +29,9 @@ Delivery.BoxPickup = {
     maxZ = 7.86,
     name = "boxpickup",
 }
-Delivery.VanSpawn = {
-    vector4(161.92, -3204.0, 5.96, 272.03)
+Delivery.VanSpawns = {
+    vector4(161.92, -3204.0, 5.96, 272.03),
+    vector4(161.03, -3196.5, 5.98, 271.88)
 }
 Delivery.Routes = {
     [1] = {
