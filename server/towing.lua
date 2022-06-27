@@ -170,5 +170,5 @@ RegisterServerEvent('towing:returntoDepot', function(groupID)
     for i=1, #members do 
         TriggerClientEvent("QBCore:Notify", members[i], "Take that vehicle back to the tow depot", "success", 7500)
         TriggerClientEvent('towing:return', members[i])
-        end
-    end)
+    end
+end)
