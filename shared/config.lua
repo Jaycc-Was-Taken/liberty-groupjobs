@@ -29,7 +29,7 @@ Config.PedList = {
             label = 'Start Tow Work',
             icon = 'fa-solid fa-circle',
             canInteract = function()
-                if exports["ps-playergroups"]:GetJobStage() ~= "TOWING" then return true end
+                if exports["ps-playergroups"]:GetJobStage() == "WAITING" then return true end
                 return false
             end,
             },
@@ -67,7 +67,7 @@ Config.PedList = {
                 label = 'Start Garbage Run',
                 icon = 'fa-solid fa-circle',
                 canInteract = function()
-                    if exports["ps-playergroups"]:GetJobStage() ~= "GARBAGE" then return true end
+                    if exports["ps-playergroups"]:GetJobStage() == "wAITING" then return true end
                     return false
                 end,
             },
@@ -153,7 +153,7 @@ Config.PedList = {
                 label = 'Start Electrician Work',
                 icon = 'fa-solid fa-circle',
                 canInteract = function()
-                    if exports["ps-playergroups"]:GetJobStage() ~= "ELECTRICIAN" then return true end
+                    if exports["ps-playergroups"]:GetJobStage() == "WAITING" then return true end
                     return false
                 end,
             },
