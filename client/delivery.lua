@@ -47,6 +47,8 @@ end)
 
 RegisterNetEvent("delivery:loadBoxesTarget", function(truckID)
     Truck = NetworkGetEntityFromNetworkId(truckID)
+    exports['ps-fuel']:SetFuel(Truck, 100)
+    SetVehicleLivery(Truck , 1)
     local BDSDoor = {'door_pside_r', 'door_dside_r'}
     exports['qb-target']:AddTargetBone(BDSDoor, {
         options = { 

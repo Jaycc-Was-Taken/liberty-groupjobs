@@ -74,7 +74,7 @@ RegisterServerEvent("delivery:stopGroupJob", function(groupID)
                     payout = payout * 1.2
                 end
                 exports['7rp-payslip']:AddMoney(cid, payout)
-                TriggerClientEvent("QBCore:Notify", members[i], "$"..payout.." added to your pay check for the On a Delivery Run", "success")
+                TriggerClientEvent("QBCore:Notify", members[i], "$"..payout.." added to your pay check for the work you've done.", "success")
             end
         end
 

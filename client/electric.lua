@@ -41,7 +41,9 @@ RegisterNetEvent("electric:attemptStop", function()
     end
 end)
 
-RegisterNetEvent("electric:startRoute", function(worksite)
+RegisterNetEvent("electric:startRoute", function(worksite, TruckID)
+    Truck = NetworkGetEntityFromNetworkId(TruckID)
+    exports['ps-fuel']:SetFuel(Truck, 100)
     local groupID = exports["ps-playergroups"]:GetGroupID()
     for k, v in pairs(Electric.Locations[worksite]["jobs"]) do
         TriggerServerEvent("electric:addjobblip", groupID, v.name, v.coords)

@@ -38,7 +38,7 @@ RegisterServerEvent("electric:createGroupJob", function(groupID)
                 for i=1, #members do 
                     TriggerClientEvent('vehiclekeys:client:SetOwner', members[i], plate)
                     Wait(100)
-                    TriggerClientEvent("electric:startRoute", members[i], electricJobs[jobID]["route"])
+                    TriggerClientEvent("electric:startRoute", members[i], electricJobs[jobID]["route"], NetworkGetNetworkIdFromEntity(car))
                 end
                 exports["ps-playergroups"]:setJobStatus(groupID, "ELECTRICIAN")
                 exports["ps-playergroups"]:CreateBlipForGroup(groupID, "jobsite", {
