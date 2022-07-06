@@ -158,29 +158,31 @@ function RouteDeliveryLoop()
             local pos = GetEntityCoords(ped)
             local Distance = #(pos - vector3(dropoffLocation.x, dropoffLocation.y, dropoffLocation.z))
             local DisplayText = false
-            if Distance < 15 then 
-                sleep = 0
-                LoadAnimation('missfbi4prepp1')
-                -- DrawMarker(27, dropoffLocation.x, dropoffLocation.y, dropoffLocation.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 100, 245, 195, 255, false, false, false, false, false, false, false)
-                if Distance < 1.5 then
-                    if not DisplayText and HasBox == true then
-                        DisplayText = true
-                        exports['qb-core']:DrawText("[E] Deliver Package", "left")
+            if HasBox then
+                if Distance < 15 then 
+                    sleep = 0
+                    LoadAnimation('missfbi4prepp1')
+                    -- DrawMarker(27, dropoffLocation.x, dropoffLocation.y, dropoffLocation.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 100, 245, 195, 255, false, false, false, false, false, false, false)
+                    if Distance < 1.5 then
+                        if not DisplayText and HasBox == true then
+                            DisplayText = true
+                            exports['qb-core']:DrawText("[E] Deliver Package", "left")
+                        end
+                        if IsControlJustPressed(0, 51) then
+                            HasBox = false
+                            DisplayText = false
+                            exports['qb-core']:HideText()
+                            DeliverBoxAnim()
+                        end
+                    elseif Distance > 1.5 then
+                        if DisplayText then
+                            DisplayText = false
+                            exports['qb-core']:HideText()
+                        end
                     end
-                    if IsControlJustPressed(0, 51) then
-                        HasBox = false
-                        DisplayText = false
-                        exports['qb-core']:HideText()
-                        DeliverBoxAnim()
-                    end
-                elseif Distance > 1.5 then
-                    if DisplayText then
-                        DisplayText = false
-                        exports['qb-core']:HideText()
-                    end
+                else 
+                    sleep = 2000
                 end
-            else 
-                sleep = 2000
             end
 
             Wait(sleep)
